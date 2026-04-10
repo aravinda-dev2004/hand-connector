@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleek Hand Connect AR</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- MediaPipe Hands CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <!-- Start Overlay -->
+    <div id="startOverlay">
+        <h1 class="start-title">Connector</h1>
+        <p class="start-subtitle">Interactive Web Experience</p>
+        <button class="start-btn" id="startBtn">Initialize Camera</button>
+    </div>
+
+    <div class="video-container">
+        <video class="input_video" autoplay playsinline></video>
+        <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <!-- UI Overlay -->
+    <div id="hud" class="hidden">
+        <div class="panel">
+            <div class="stat">Hands Synced: <span class="val" id="ui-hands">0</span></div>
+            <div class="stat">Performance Engine: <span class="val" id="ui-fps">0 fps</span></div>
+        </div>
+        <div class="panel">
+            <div class="stat">Target Posture: <span class="val" id="ui-gesture">Calibrating...</span></div>
+            <div class="stat">Spatial Variance: <span class="val" id="ui-spread">0%</span></div>
+        </div>
+    </div>
+
+    <div id="themes" class="hidden">
+        <button class="theme-btn active" data-theme="Cosmic">Cosmic</button>
+        <button class="theme-btn" data-theme="Boreal">Boreal</button>
+        <button class="theme-btn" data-theme="Heat">Heat</button>
+        <button class="theme-btn" data-theme="Monochrome">Monochrome</button>
+    </div>
+
+    <!-- Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
