@@ -15,6 +15,12 @@ let lastFpsTime = performance.now();
 
 let currentHands = []; 
 const FINGER_TIPS = [4, 8, 12, 16, 20];
+const GESTURE_LOCK_FRAMES = 2;
+
+let activeGesture = "Calibrating...";
+let activeHandForEffects = null;
+let gestureCandidate = "Idle";
+let gestureCandidateFrames = 0;
 
 // Refined Palette
 let currentTheme = 'Cosmic';
@@ -74,7 +80,15 @@ function mapToCanvas(point) {
 }
 
 function detectGestures() {
-    if (!currentHands.length) return;
+    if (!currentHands.length) {
+        activeGesture = "Searching...";
+        activeHandForEffects = null;
+        gestureCandidate = "Idle";
+        gestureCandidateFrames = 0;
+        uiGesture.innerText = activeGesture;
+        uiSpread.innerText = '0%';
+        return;
+    }
     
     let primaryGesture = "Idle";
     const h1 = currentHands[0];
@@ -108,7 +122,75 @@ function detectGestures() {
         }
     }
     
-    uiGesture.innerText = primaryGesture;
+    if (primaryGesture === gestureCandidate) {
+        gestureCandidateFrames++;
+    } else {
+        gestureCandidate = primaryGesture;
+        gestureCandidateFrames = 1;
+    }
+
+    if (gestureCandidateFrames >= GESTURE_LOCK_FRAMES || primaryGesture === "Pinching" || primaryGesture === "Clapping") {
+        activeGesture = primaryGesture;
+    }
+
+    activeHandForEffects = h1;
+    uiGesture.innerText = activeGesture;
+}
+
+function drawThumbsUpEffect(hand) {
+    if (!hand) return;
+
+    const thumbTip = mapToCanvas(hand[4]);
+    const wrist = mapToCanvas(hand[0]);
+    const palm = mapToCanvas(hand[9]);
+    const centerX = (wrist.x + palm.x) * 0.5;
+    const centerY = (wrist.y + palm.y) * 0.5;
+
+    const pulse = 0.65 + 0.35 * Math.sin(time * 11);
+    const auraRadius = 45 + 18 * pulse;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    const aura = ctx.createRadialGradient(centerX, centerY, 4, centerX, centerY, auraRadius);
+    aura.addColorStop(0, `hsla(45, 100%, 70%, ${0.55 * pulse})`);
+    aura.addColorStop(0.55, `hsla(200, 100%, 65%, ${0.25 * pulse})`);
+    aura.addColorStop(1, 'hsla(260, 100%, 65%, 0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, auraRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let i = 0; i < 7; i++) {
+        const angle = time * 2.6 + i * (Math.PI * 2 / 7);
+        const dist = 22 + 10 * Math.sin(time * 6 + i);
+        const x = thumbTip.x + Math.cos(angle) * dist;
+        const y = thumbTip.y + Math.sin(angle) * dist;
+        const r = 1.8 + 1.6 * pulse;
+
+        ctx.fillStyle = themes[currentTheme](time + i * 0.5, i, 7);
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    const beam = ctx.createLinearGradient(wrist.x, wrist.y, thumbTip.x, thumbTip.y);
+    beam.addColorStop(0, 'rgba(255,255,255,0)');
+    beam.addColorStop(0.45, 'rgba(255,255,255,0.45)');
+    beam.addColorStop(1, 'rgba(255,230,140,0.95)');
+    ctx.strokeStyle = beam;
+    ctx.lineWidth = 3 + pulse;
+    ctx.beginPath();
+    ctx.moveTo(wrist.x, wrist.y);
+    ctx.lineTo(thumbTip.x, thumbTip.y);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff7c9';
+    ctx.beginPath();
+    ctx.arc(thumbTip.x, thumbTip.y, 4 + 3 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
 }
 
 /**
@@ -185,7 +267,12 @@ function renderLoop(timestamp) {
             });
         }
         
-        detectGestures();
+    }
+
+    detectGestures();
+
+    if (activeGesture === "Thumbs Up" && activeHandForEffects) {
+        drawThumbsUpEffect(activeHandForEffects);
     }
 }
 
@@ -200,8 +287,8 @@ function initMediaPipe() {
     hands.setOptions({
         maxNumHands: 2,
         modelComplexity: 0, // Lite Model for Top FPS
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
+        minDetectionConfidence: 0.45,
+        minTrackingConfidence: 0.45
     });
 
     hands.onResults((results) => {
@@ -213,8 +300,8 @@ function initMediaPipe() {
         onFrame: async () => {
             await hands.send({image: videoElement});
         },
-        width: 1280,
-        height: 720,
+        width: 960,
+        height: 540,
         facingMode: 'user'
     });
     
