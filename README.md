@@ -106,4 +106,4 @@ This project is open source. Feel free to fork, remix, and build on it.
 
 ---
 
-<p align="center">Made by <a href="https://github.com/aravinda-dev2004">aravinda-dev2004</a></p>
+<p align="center">Made by <a href="https://github.com/AmareDev2k">AmareDev2k</a></p>
